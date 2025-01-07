@@ -30,7 +30,7 @@ A simple IP scanner built with Flask that detects connected devices on a network
    Activate venv Windows
    venv\Scripts\activate
 
-   Activate venv Linus
+   Activate venv Linux
    venv/bin/activate
 
    once you activate, then
