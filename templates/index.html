@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Scanner</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Link to the CSS file -->
+</head>
+
+<body>
+    <h1>Welcome to the IP Scanner</h1>
+    <p>Your operating system: <span class="os-info">{{ os_info }}</span></p>
+
+    <form id="scanForm">
+        <input type="text" name="ip_range" placeholder="Enter CIDR (e.g., 192.168.1.0/24)" required>
+        <input type="text" name="ports" placeholder="Enter ports (comma separated)" required>
+        <button type="submit">Scan</button>
+    </form>
+
+    <div id="loading">Loading...</div>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('scanForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const ipRange = formData.get('ip_range');
+            const ports = formData.get('ports');
+
+            // Validate CIDR format using a regex
+            const cidrPattern = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$/;
+            if (!cidrPattern.test(ipRange)) {
+                alert('Please enter a valid CIDR format (e.g., 192.168.1.0/24)');
+                return;
+            }
+
+            // Validate that ports are comma-separated numbers
+            const portPattern = /^[0-9]+(,[0-9]+)*$/;
+            if (!portPattern.test(ports)) {
+                alert('Please enter valid ports, separated by commas (e.g., 22,80,443)');
+                return;
+            }
+
+            // Show loading indicator
+            document.getElementById('loading').style.display = 'block';
+            const response = await fetch('/scan', {
+                method: 'POST',
+                body: formData
+            });
+
+            // Hide loading indicator
+            document.getElementById('loading').style.display = 'none';
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = ''; // Clear previous results
+
+            if (response.ok) {
+                const data = await response.json();
+                const devices = data.devices;
+                if (devices.length > 0) {
+                    const table = `<table>
+                        <tr><th>IP Address</th><th>MAC Address</th><th>Ports</th></tr>
+                        ${devices.map(device => `
+                        <tr>
+                            <td>${device.ip}</td>
+                            <td>${device.mac}</td>
+                            <td>${Object.entries(device.ports).map(([port, status]) => `${port}: ${status ? 'Open' : 'Closed'}`).join(', ')}</td>
+                        </tr>`).join('')}
+                    </table>`;
+                    resultDiv.innerHTML = table;
+                } else {
+                    resultDiv.innerHTML = "<p>No devices found.</p>";
+                }
+            } else {
+                const errorData = await response.json();
+                resultDiv.innerHTML = `<p class="error">${errorData.error}</p>`;
+            }
+        });
+    </script>
+
+    <div class="footer">© 2023 Your Company</div>
+</body>
+
+</html>
