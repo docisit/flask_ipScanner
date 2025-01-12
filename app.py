@@ -9,10 +9,10 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    # Get the operating system information
+    
     os_info = platform.system() + " " + platform.release()
     
-    # Render the index page with OS info
+    
     return render_template('index.html', os_info=os_info)
 
 @app.route('/scan', methods=['POST'])
@@ -27,10 +27,8 @@ def scan():
     except ValueError:
         return jsonify({'error': 'Invalid CIDR address format.'}), 400
 
-    # Get connected devices
     devices = get_connected_devices()
 
-    # Scan ports for each device
     scan_results = scan_ports(devices, ports)
 
     return jsonify({'devices': scan_results})
